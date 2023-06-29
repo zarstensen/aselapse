@@ -1,0 +1,1 @@
+7z a -tzip publish/aselapse.aseprite-extension package.json aselapse.lua

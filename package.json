@@ -1,0 +1,21 @@
+{
+    "name": "aselapse",
+    "displayName": "AseLapse",
+    "description": "Creates timelapses of the pixel-art drawing process",
+    "version": "0.0.0.0",
+    "autor":
+    {
+        "name": "Zarstensen",
+        "email": "4lo9d87b5@mozmail.com",
+        "url": "https://github.com/karstensensensen"
+    },
+    "contributors": [ ],
+    "publisher": "Zarstensen",
+    "license": "CC-BY-4.0",
+    "categoreis": [ "Scripts" ],
+    "contributes": {
+        "scripts": [
+            { "path": "./aselapse.lua" }
+        ]
+    }
+}
