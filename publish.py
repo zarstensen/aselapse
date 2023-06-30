@@ -15,7 +15,7 @@ if len(sys.argv) != 2:
     exit(-1)
 
 if not sys.argv[1].lower() in option_to_index_map.keys():
-    print(f"Invalid command line argument\nMust be one of the following values!: {valid_args}")
+    print(f"Invalid command line argument\nMust be one of the following values!: {option_to_index_map.keys()}")
     exit(-1)
 
 # increment the package version
