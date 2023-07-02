@@ -1,7 +1,8 @@
+import os
 import sys
 import json
 from packaging import version
-from zipfile import ZIP_LZMA, ZipFile
+from zipfile import ZIP_DEFLATED, ZipFile
 
 option_to_index_map = {
     "major" : 0,
@@ -52,12 +53,15 @@ with open("package.json", 'r+') as package_data:
 
 # add all package files to a .asesprite-extension zip file
 
-target_files = [ "package.json" ] + [ script["path"] for script in package["contributes"]["scripts"] ]
+target_files = [ "package.json" ] + [ lua_script for lua_script in os.listdir('./') if lua_script.endswith('.lua') ]
 
 extension_location = "publish/aselapse.aseprite-extension"
 
+if os.path.isfile(extension_location):
+    os.remove(extension_location)
+
 print()
-with ZipFile(extension_location, 'w', ZIP_LZMA) as extension_zip:
+with ZipFile(extension_location, 'w', ZIP_DEFLATED) as extension_zip:
     for file in target_files:
         print(f"Adding {file} to extension")
         extension_zip.write(file, compresslevel=5)
