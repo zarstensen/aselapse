@@ -7,38 +7,45 @@ require 'config'
  --- the sprite that frames should be taken from, when updating the timelapse
  ---@return SpriteLapse | nil
  --- returns an SpriteLapse instance, if the object was created succesfully, otherwise nil is returned.
-function SpriteLapse(source_sprite)
-
+ function SpriteLapse(source_sprite)
+    
     local spritelapse = {
         --- instance of the sprite frames are being taken from.
         source_sprite = nil,
         lapse_dialog = nil,
-
+        
         --- constructor helper method, see SpriteLapse function for info
         __init__ = function(self, _source_sprite)
-
+            
             self.source_sprite = _source_sprite
-
+            
             app.transaction(function()
-
+                
+                -- each sprite which has a timelapse, will be marked with the has_lapse property.
+                -- this signals to the extension that on future loads, the following sprite should automatically be registered in the extension.
+                
                 self.source_sprite.properties(PLUGIN_KEY).has_lapse = true
                 
+                -- has_dialog represents whether the current sprite should have its lapse_dialog visible to the user
                 if self.source_sprite.properties(PLUGIN_KEY).has_dialog == nil then
                     self.source_sprite.properties(PLUGIN_KEY).has_dialog = false
                 end
-
+                
+                -- is_paused controls whether frames are stored, on sprite modifications
                 if self.source_sprite.properties(PLUGIN_KEY).is_paused == nil then
                     self.source_sprite.properties(PLUGIN_KEY).is_paused = true
                 end
-
+                
             end)
-
-            -- determine which way to retrieve the lapse_sprite instance, based on the state of the source sprite
-
+            
+            -- load any previously stored timelapse frames into memory
+            
             if app.fs.isFile(self:__timelapseFile()) then
                 self:__loadLapse(self:__timelapseFile())
             end
-
+            
+            -- setup dialog
+            
             self.lapse_dialog = Dialog {
                 title = "Timelapse",
                 onclose = function()
@@ -68,48 +75,64 @@ function SpriteLapse(source_sprite)
             }
             :button
             {
-                id="toggleRecordButton",
+                id="playPauseButton",
                 onclick = function()
                     self:__togglePause()
-                    self:__syncPauseButton()
+                    self:__syncPlayPauseButton()
                 end,
             }
-
-            self:__syncPauseButton()
-
+            
+            self:__syncPlayPauseButton()
+            
+            -- store a copy of the sprite in memory, every time the sprite is modified, unless the timelapse is paused
+            
             self.__sprite_event_key = self.source_sprite.events:on('change',
-                function(ev)
-                    if self.source_sprite.properties(PLUGIN_KEY).is_paused then
-                        return
-                    end
-
-                    self:__storeFrame(app.frame)
-                end)
+            function(ev)
+                if self.source_sprite.properties(PLUGIN_KEY).is_paused then
+                    return
+                end
+                
+                self:__storeFrame(app.frame)
+            end)
 
             return self
         end,
+
+        --- Should be invoked whenever the SpriteLapse is no longer needed.
+        --- Saves a copy of the current timelapse to disk.
+        cleanup = function(self)
+            self:__generateTimelapse():close()
+        end,
         
+        --- Called any time the source_sprite is focused or not
         focus = function(self, focused)
+            
+            -- the dialog should only be visible to the user, if the source_sprite is focused, and has_dialog is set.
+            
             if focused and self.source_sprite.properties(PLUGIN_KEY).has_dialog then
                 self.lapse_dialog:show{ wait = false }
             else
+                -- __user_closed is used in the onclose method, to decide whether has_dialog should be cleared or not.
                 self.__user_closed = false
                 self.lapse_dialog:close()
                 self.__user_closed = true
             end
         end,
         
+        --- Shows the lapse_dialog dialog.
         openDialog = function(self)
-            self:__removeFrame()
             self.source_sprite.properties(PLUGIN_KEY).has_dialog = true
+            self:__removeFrame()
+
             self.lapse_dialog:show{ wait = false }
         end,
         
         __user_closed = true,
-        __prev_dialog_state = nil,
         __sprite_event_key = nil,
+        -- list of Image objects, representing a frame in the timelapse.
         __frames = {},
 
+        --- Toggle the pause state of the SpriteLapse instance
         __togglePause = function(self)
             self.source_sprite.properties(PLUGIN_KEY).is_paused = not self.source_sprite.properties(PLUGIN_KEY).is_paused
             
@@ -121,15 +144,17 @@ function SpriteLapse(source_sprite)
             end
         end,
 
-        __syncPauseButton = function(self)
+        --- Update the text of the playPauseButton so it matches with the pause state.
+        ---@param self any
+        __syncPlayPauseButton = function(self)
             if self.source_sprite.properties(PLUGIN_KEY).is_paused then
                 self.lapse_dialog:modify{
-                    id="toggleRecordButton",
+                    id="playPauseButton",
                     text = "►"
                 }
             else
                 self.lapse_dialog:modify{
-                    id="toggleRecordButton",
+                    id="playPauseButton",
                     text = "||"
                 }
             end
@@ -152,6 +177,7 @@ function SpriteLapse(source_sprite)
             }
         end,
 
+        --- Removes the latest frame from the timelapse memory.
         __removeFrame = function(self)
             table.remove(self.__frames, #self.__frames)
                 self.lapse_dialog:modify{
@@ -160,12 +186,14 @@ function SpriteLapse(source_sprite)
                 }
         end,
 
-        cleanup = function(self)
-            self:__generateTimelapse():close()
-        end,
-
+        --- Creates a new sprite which holds the timelapse frame currently stored in memory
+        ---@return Sprite
+        --- The generated sprite
         __generateTimelapse = function(self)
             
+            -- find the width and height of the sprite,
+            -- it should be large enough to hold both the tallest and widest image currently in memory.
+
             local max_width, max_height = 0, 0
             
             local color_mode = nil
@@ -181,29 +209,37 @@ function SpriteLapse(source_sprite)
 
             local sprite = Sprite(max_width, max_height, color_mode)
             
+            -- convert the currently stored images in __frames to frames in the sprite
+
             for frame_number, frame_image in ipairs(self.__frames) do
                 local frame = sprite:newEmptyFrame(frame_number)
                 sprite:newCel(sprite.layers[1], frame, frame_image)
             end
 
+            -- whenever a Sprite is constructed, it comes with an empty frame, so this frame is removed here.
+
             sprite:deleteFrame(#sprite.frames)
 
-            local name, ext = self.source_sprite.filename:match("^(.*)(%..*)$")
+            -- finally save the timelapse sprite to disk
 
-            sprite.filename = name .. "-lapse" .. ext
+            sprite.filename = self:__timelapseFile()
             
             sprite:saveAs(sprite.filename)
 
             return sprite
         end,
 
-
+        --- Returns the name of the source_sprite suffixed with '-lapse'
+        ---@return string
+        --- Timelapse filename
         __timelapseFile = function(self)
             local name, ext = self.source_sprite.filename:match("^(.*)(%..*)$")
 
             return name .. "-lapse" .. ext
         end,
 
+        --- Loads all frames of the given sprite, stored at file_name into the __frames list.
+        ---@param file_name any
         __loadLapse = function(self, file_name)
             
             -- open the sprite which has all of the frames

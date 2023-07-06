@@ -1,4 +1,0 @@
-print("\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\Aseprite.exe\" -b \"C:\\Users\\Karsten\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\SansMod\\Items\\HotDog.aseprite\" --save-as \"C:\\Users\\Karsten\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\SansMod\\Items/IMAGE.png\" && pause")
--- print(os.execute("\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\Aseprite.exe\" -b \"C:\\Users\\Karsten\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\SansMod\\Items\\HotDog.aseprite\" --save-as \"C:\\Users\\Karsten\\Documents\\My Games\\Terraria\\tModLoader\\ModSources\\SansMod\\Items/IMAGE.png\" && pause"))
-print(os.execute("\"\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\Aseprite.exe\" -b \"HotDog.aseprite\"\""))
-print("\"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Aseprite\\Aseprite.exe\" -b HotDog.aseprite")

@@ -1,13 +1,48 @@
 require 'FocusManager'
 require 'SpriteLapse'
 
+-- key used to unsubscribe of the sitechange event
 sitechange_key = nil
+-- FocusManager instance, for managing all SpriteLapse instances.
 focus_manager = nil
 
+--- Checks if the passed sprite contains all of the passed properties.
+--- If one of the properties are missing, all other properties are set to nil.
+--- This makes sure any potentially corrupt sprite, will be reset by the extension, before it is loaded.
+---@param sprite Sprite
+---@param properties List<string>
+function verifySprite(sprite, properties)
+    
+    if not sprite then
+        return
+    end 
+
+    local missing_property = false
+
+    for _, property in ipairs(properties) do
+        if sprite.properties(PLUGIN_KEY)[property] == nil then
+            missing_property = true
+            break
+        end
+    end
+
+    if missing_property then
+        for _, property in ipairs(properties) do
+            sprite.properties(PLUGIN_KEY)[property] = nil
+        end
+    end
+
+end
+
 function init(plugin)
+
+    -- initialize a focus manager instance
+
     focus_manager = FocusManager()
 
     focus_manager:init()
+
+    -- setup timelapse command
 
     plugin:newMenuSeparator{
         group="sprite_crop"
@@ -35,26 +70,21 @@ function init(plugin)
         end,
     }
 
-    plugin:newCommand{
-        id="close_command",
-        title="Close",
-        group="sprite_crop",
-        onclick=function()
-            app.sprite:close()
-        end,
-    }
+    -- setup sitechange event, which makes sure any loaded sprite automatically is added to the focus manager, if the sprite has a timelapse
 
     sitechange_key = app.events:on('sitechange', function()
+
+        verifySprite(app.sprite, { "has_lapse", "has_dialog", "is_paused" })
 
         if app.sprite and not focus_manager:contains(app.sprite) and app.sprite.properties(PLUGIN_KEY).has_lapse then
             focus_manager:add(function() return SpriteLapse(app.sprite) end, app.sprite, true)
         end
 
-
-        verifySprite(app.sprite, { "has_lapse", "has_dialog", "is_paused" })
-
     end)
     
+    -- on load, go through every sprite, and check if they have a timelapse registered, if so, add it to the focus manager instance,
+    -- so the user does not have to manually click the "timelapse" command every time the sprite is opened.
+
     for _, sprite in ipairs(app.sprites) do
         
         verifySprite(sprite, { "has_lapse", "has_dialog", "is_paused" })
@@ -68,32 +98,9 @@ function init(plugin)
 
 end
 
-function verifySprite(sprite, properties)
-    
-    if not sprite then
-        return
-    end 
-
-    local missing_property = false
-
-    for _, property in ipairs(properties) do
-        if sprite.properties(PLUGIN_KEY)[property] == nil then
-            missing_property = true
-            break
-        end
-    end
-
-    if missing_property then
-        for _, property in ipairs(properties) do
-            sprite.properties(PLUGIN_KEY)[property] = nil
-        end
-    end
-
-end
-
 function exit(plugin)
     
-    local tmp_sprite = app.sprite
+    -- cleanup focus manager, unsubscribe from sitechange event, and also generate and save a timelapse for all currently open sprites, that have a timelapse.
 
     focus_manager:cleanup()
     focus_manager = nil
@@ -105,8 +112,6 @@ function exit(plugin)
             sprite:close()
         end
     end
-
-    app.sprite = tmp_sprite
 
     app.events:off(sitechange_key)
 
