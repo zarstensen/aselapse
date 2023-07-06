@@ -1,1 +1,2 @@
-python publish.py major
+cd src
+python ../publish.py major

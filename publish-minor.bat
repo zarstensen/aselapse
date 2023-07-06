@@ -1,1 +1,2 @@
-python publish.py minor
+cd src
+python ../publish.py minor

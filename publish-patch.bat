@@ -1,1 +1,2 @@
-python publish.py patch
+cd src
+python ../publish.py patch
