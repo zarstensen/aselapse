@@ -148,20 +148,10 @@ function FocusManager()
             if app.sprite == self.__active_sprite then
                 return
             end
-            
-            print("UD")
-            print(self.__active_object)
-            print(self.__active_sprite)
-            print(app.sprite)
 
             self.__active_sprite = app.sprite
 
             -- now we notify the currently focused object
-
-            if self.__active_object ~= nil then
-                print("FOCUS")
-                print(self.__active_object.focus)
-            end
 
             if self.__active_object ~= nil and self.__active_object.focus then
                 self.__active_object:focus(false)

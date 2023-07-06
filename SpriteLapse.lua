@@ -50,13 +50,7 @@ require 'config'
                 title = "Timelapse",
                 onclose = function()
                     if self.__user_closed then
-                        
-                        -- we do not want to store proeprties change events, as those are not visual,
-                        -- so we immediatly erase the newly stored frame, after modifying the sprite properties
-                        
-                        self.source_sprite.properties(PLUGIN_KEY).has_dialog = false
-                        
-                        self:__removeFrame()
+                        self:__setProperty("has_dialog", false)
                     end
                 end
             }
@@ -121,8 +115,7 @@ require 'config'
         
         --- Shows the lapse_dialog dialog.
         openDialog = function(self)
-            self.source_sprite.properties(PLUGIN_KEY).has_dialog = true
-            self:__removeFrame()
+            self:__setProperty("has_dialog", true)
 
             self.lapse_dialog:show{ wait = false }
         end,
@@ -132,16 +125,24 @@ require 'config'
         -- list of Image objects, representing a frame in the timelapse.
         __frames = {},
 
-        --- Toggle the pause state of the SpriteLapse instance
-        __togglePause = function(self)
-            self.source_sprite.properties(PLUGIN_KEY).is_paused = not self.source_sprite.properties(PLUGIN_KEY).is_paused
-            
-            -- we only remove the frame here, if it was previously paused,
-            -- as the modification to the is_paused property would be seen in the sitechange event,
-            -- resulting in frames not being stored whenever we go from unpaused to paused
+        --- Sets the given property to the passed value, in the source_sprite
+        ---@param property_name string
+        ---@param property_value any
+        __setProperty = function(self, property_name, property_value)
+            self.source_sprite.properties(PLUGIN_KEY)[property_name] = property_value
+
+            -- we do not want to store proeprties change events, as those are not visual,
+            -- so we immediatly erase the newly stored frame, after modifying the sprite properties
+
             if not self.source_sprite.properties(PLUGIN_KEY).is_paused then
                 self:__removeFrame()
             end
+
+        end,
+
+        --- Toggle the pause state of the SpriteLapse instance
+        __togglePause = function(self)
+            self:__setProperty("is_paused", not self.source_sprite.properties(PLUGIN_KEY).is_paused)
         end,
 
         --- Update the text of the playPauseButton so it matches with the pause state.
