@@ -5,27 +5,53 @@ require 'config'
 ---@return FocusManager | nil
 --- nil if construction failed
 function FocusManager()
-
+    
     local dialog_manager = {
+        init = function(self)
+            
+            self.__sitechange_key = app.events:on('sitechange', function()
+                self:__updateDialog()
+            end)
+
+        end,
 
         --- Associates the passed object with the passed sprite.
         --- This means obj:focus(state) will have state = true, when the associated sprite is the active sprite,
         --- and false otherwise.  
-        ---@param obj Table
+        --- When the FocusManager's cleanup method is called, it will also call a cleanup [obj:cleanup()] method on all of its stored objects,
+        --- if they have defined such a method.
+        ---@param obj_factory Function() -> Table
         ---@param sprite Sprite
         ---@return Table
-        --- obj
-        add = function(self, obj, sprite)
+        --- obj_factory result
+        add = function(self, obj_factory, sprite, focus)
 
-            self.__objects[self.__curr_id] = obj
             sprite.properties(PLUGIN_KEY).object_id = self.__curr_id
+            -- store a placeholder empty table at the id index, so contains will return true, if it is called during obj_factory.
+            self.__objects[self.__curr_id] = {}
+            self.__objects[self.__curr_id] = obj_factory()
             self.__curr_id = self.__curr_id + 1
 
             self:__updateDialog()
 
-            return obj
+            if focus then
+                self.__objects[sprite.properties(PLUGIN_KEY).object_id]:focus(true)
+            end
+
+            return self.__objects[sprite.properties(PLUGIN_KEY).object_id]
         end,
 
+        contains = function(self, sprite)
+            if sprite.properties(PLUGIN_KEY).object_id == nil then
+                return false
+            else
+                return self.__objects[sprite.properties(PLUGIN_KEY).object_id] ~= nil
+            end
+        end,
+
+        get = function(self, sprite)
+            return self.__objects[sprite.properties(PLUGIN_KEY).object_id]
+        end,
 
         --- Removes the object associated with the passed sprite.
         ---@param sprite Sprite
@@ -36,12 +62,6 @@ function FocusManager()
             self.__active_object = nil
         end,
 
-        init = function(self)
-
-            self.__sitechange_key = app.events:on('sitechange', function()
-                self:__updateDialog()
-            end)
-        end,
 
         --- Cleanup method, should be called right before assigning.
         --- We need a separate cleanup method that is called as soon as the extension is being disabled,
@@ -53,6 +73,10 @@ function FocusManager()
 
             for _, dialog in pairs(self.__objects) do
                 dialog:focus(false)
+
+                if dialog.cleanup then
+                    dialog:cleanup()
+                end
             end
 
             for _, sprite in ipairs(app.sprites) do
@@ -81,7 +105,7 @@ function FocusManager()
 
             -- now we notify the currently focused object
 
-            if self.__active_object ~= nil then
+            if self.__active_object ~= nil and self.__active_object.focus then
                 self.__active_object:focus(false)
             end
 
@@ -98,14 +122,16 @@ function FocusManager()
                 return
             end
             
-            self.__active_object = self.__objects[self.__active_sprite.properties(PLUGIN_KEY).object_id]
+            self.__active_object = self:get(self.__active_sprite)
 
             if self.__active_object == nil then
                 self.__active_sprite.properties(PLUGIN_KEY).object_id = nil
                 return
             end
 
-            self.__active_object:focus(true)
+            if self.__active_object.focus then
+                self.__active_object:focus(true)
+            end
         end
     }
 

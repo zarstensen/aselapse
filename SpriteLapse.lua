@@ -12,8 +12,6 @@ function SpriteLapse(source_sprite)
     local spritelapse = {
         --- instance of the sprite frames are being taken from.
         source_sprite = nil,
-        --- instance of the sprite, where the timelapse is actually being stored
-        lapse_sprite = nil,
         lapse_dialog = nil,
 
         --- constructor helper method, see SpriteLapse function for info
@@ -21,209 +19,207 @@ function SpriteLapse(source_sprite)
 
             self.source_sprite = _source_sprite
 
+            app.transaction(function()
+
+                self.source_sprite.properties(PLUGIN_KEY).has_lapse = true
+                
+                if self.source_sprite.properties(PLUGIN_KEY).has_dialog == nil then
+                    self.source_sprite.properties(PLUGIN_KEY).has_dialog = false
+                end
+
+                if self.source_sprite.properties(PLUGIN_KEY).is_paused == nil then
+                    self.source_sprite.properties(PLUGIN_KEY).is_paused = true
+                end
+
+            end)
 
             -- determine which way to retrieve the lapse_sprite instance, based on the state of the source sprite
 
-            if self.source_sprite.properties(PLUGIN_KEY).mode == nil then
-                self:__createLapse(self.source_sprite)
-            elseif self.source_sprite.properties(PLUGIN_KEY).mode == "HAS_LAPSE" then
-                self:__loadLapse(self.source_sprite)
-            elseif self.source_sprite.properties(PLUGIN_KEY).mode == "IS_LAPSE" then
-                print("Cannot create spritelapse for another spritelapse")
-            else
-                print("Unknown error")
+            if app.fs.isFile(self:__timelapseFile()) then
+                self:__loadLapse(self:__timelapseFile())
             end
 
-            if self.lapse_sprite == nil then
-                return nil
-            end
-
-            self.lapse_dialog = Dialog { title="Timelapse" }
+            self.lapse_dialog = Dialog {
+                title = "Timelapse",
+                onclose = function()
+                    if self.__user_closed then
+                        
+                        -- we do not want to store proeprties change events, as those are not visual,
+                        -- so we immediatly erase the newly stored frame, after modifying the sprite properties
+                        
+                        self.source_sprite.properties(PLUGIN_KEY).has_dialog = false
+                        
+                        self:__removeFrame()
+                    end
+                end
+            }
             :label
             {
                 id = "frameCount",
-                text = "Frames: " .. self:__frameCount(),
+                text = "Frames: " .. #self.__frames,
             }
             :button
             {
                 id="generateTimelapse",
                 text="Generate",
                 onclick = function()
-                    self:generateTimelapse()
+                    self:__generateTimelapse()
                 end
             }
             :button
             {
                 id="toggleRecordButton",
-                text="►",
                 onclick = function()
-                    self:togglePause()
-
-                    if self.__is_paused then
-                        self.lapse_dialog:modify{
-                            id="toggleRecordButton",
-                            text = "►"
-                        }
-                    else
-                        self.lapse_dialog:modify{
-                            id="toggleRecordButton",
-                            text = "||"
-                        }
-                    end
+                    self:__togglePause()
+                    self:__syncPauseButton()
                 end,
             }
 
+            self:__syncPauseButton()
+
             self.__sprite_event_key = self.source_sprite.events:on('change',
                 function(ev)
-                    if self.__is_paused then
+                    if self.source_sprite.properties(PLUGIN_KEY).is_paused then
                         return
                     end
 
-                    self:storeFrame(app.frame)
+                    self:__storeFrame(app.frame)
                 end)
-
-            self.__modifications = 0
 
             return self
         end,
-
+        
         focus = function(self, focused)
-            if focused then
+            if focused and self.source_sprite.properties(PLUGIN_KEY).has_dialog then
                 self.lapse_dialog:show{ wait = false }
             else
+                self.__user_closed = false
                 self.lapse_dialog:close()
+                self.__user_closed = true
+            end
+        end,
+        
+        openDialog = function(self)
+            self:__removeFrame()
+            self.source_sprite.properties(PLUGIN_KEY).has_dialog = true
+            self.lapse_dialog:show{ wait = false }
+        end,
+        
+        __user_closed = true,
+        __prev_dialog_state = nil,
+        __sprite_event_key = nil,
+        __frames = {},
+
+        __togglePause = function(self)
+            self.source_sprite.properties(PLUGIN_KEY).is_paused = not self.source_sprite.properties(PLUGIN_KEY).is_paused
+            
+            -- we only remove the frame here, if it was previously paused,
+            -- as the modification to the is_paused property would be seen in the sitechange event,
+            -- resulting in frames not being stored whenever we go from unpaused to paused
+            if not self.source_sprite.properties(PLUGIN_KEY).is_paused then
+                self:__removeFrame()
             end
         end,
 
-        togglePause = function(self)
-            self.__is_paused = not self.__is_paused
+        __syncPauseButton = function(self)
+            if self.source_sprite.properties(PLUGIN_KEY).is_paused then
+                self.lapse_dialog:modify{
+                    id="toggleRecordButton",
+                    text = "►"
+                }
+            else
+                self.lapse_dialog:modify{
+                    id="toggleRecordButton",
+                    text = "||"
+                }
+            end
         end,
 
         --- Inserts a copy of the passed frame from the source sprite, into a new frame in the lapse_sprite.
         ---@param self any
         ---@param frame any
         --- the frame that should be copied from, if source_sprite is the active sprite, app.frame should be used.
-        storeFrame = function(self, frame)
-            -- local new_frame = self.lapse_sprite:newEmptyFrame(#self.lapse_sprite.frames + 1)
-
+        __storeFrame = function(self, frame)
             local new_image = Image(self.source_sprite.spec)
 
             new_image:drawSprite(self.source_sprite, frame.frameNumber)
 
-            
-            local timelapse_folder = self:__timelapseFolder()
-
-            -- new_image:saveAs(timelapse_folder .. app.fs.fileTitle(self.source_sprite.filename) .. "-lapse-" .. #app.fs.listFiles(timelapse_folder) + 1 .. "-1.aseprite")
+            table.insert(self.__frames, new_image)
 
             self.lapse_dialog:modify{
                 id = "frameCount",
-                text = "Frames: " .. self:__frameCount(),
+                text = "Frames: " .. #self.__frames,
             }
         end,
 
-        generateTimelapse = function(self)
-            local files = app.fs.listFiles(self:__timelapseFolder())
-
-            local frames = { }
-
-            local lapse_sprite = Sprite(self.source_sprite.filename)
-
-            for _, file in ipairs(files) do
-                frames[file] = tonumber(file:match(".*%-lapse%-(%d+)%.aseprite"))
-            end
-
-            table.sort(files, function(left, right)
-                return frames[left] < frames[right]
-            end)
-
-            for _, file in ipairs(files) do
-                local sprite_frame = Sprite{ fromFile = file }
-                print(file)
-            end
-
+        __removeFrame = function(self)
+            table.remove(self.__frames, #self.__frames)
+                self.lapse_dialog:modify{
+                    id = "frameCount",
+                    text = "Frames: " .. #self.__frames,
+                }
         end,
 
-        __sprite_event_key = nil,
-        __is_paused = true,
-        __timelapse_file_match = ".+%-lapse%-(%d+)%-(%d+).aseprite",
+        cleanup = function(self)
+            self:__generateTimelapse():close()
+        end,
 
-        __frameCount = function(self)
-            local frame_count = 0
+        __generateTimelapse = function(self)
+            
+            local max_width, max_height = 0, 0
+            
+            local color_mode = nil
 
-            for _, file in ipairs(app.fs.listFiles(self:__timelapseFolder())) do
-                local _, file_frame_count = file:match(self.__timelapse_file_match)
-
-                frame_count = frame_count + tonumber(file_frame_count)
+            if #self.__frames > 0 then
+                color_mode = self.__frames[1].colorMode
             end
 
-            return frame_count
-        end,
+            for _, frame in ipairs(self.__frames) do
+                max_width = math.max(max_width, frame.width)
+                max_height = math.max(max_width, frame.height)
+            end
 
-        __timelapseFolder = function(self)
-            local root_dir = app.fs.filePath(self.source_sprite.filename)
-            local sprite_name = app.fs.fileTitle(self.source_sprite.filename)
-            local timelapse_folder = root_dir .. '/' .. sprite_name .. "-timelapse/"
+            local sprite = Sprite(max_width, max_height, color_mode)
+            
+            for frame_number, frame_image in ipairs(self.__frames) do
+                local frame = sprite:newEmptyFrame(frame_number)
+                sprite:newCel(sprite.layers[1], frame, frame_image)
+            end
 
-            return timelapse_folder
-        end,
-
-        --- Private
-        --- constructs a new sprite that will store the timelapse of the source sprite.
-        --- also marks the source and time lapse sprite, so later loads can determine whether to load or create a new timelapse sprite.
-        ---@param self any
-        __createLapse = function(self)
-            -- print("CREATING A NEW SPRITELAPSE")
-
-            -- timelapse sprites have the same named as the source sprite except prefixed with -lapse.
-            -- in order to do this, the file name and extension must be separated, using the following match. 
+            sprite:deleteFrame(#sprite.frames)
 
             local name, ext = self.source_sprite.filename:match("^(.*)(%..*)$")
 
-            self.lapse_sprite = Sprite(self.source_sprite)
+            sprite.filename = name .. "-lapse" .. ext
+            
+            sprite:saveAs(sprite.filename)
 
-            self.lapse_sprite.filename = name .. "-lapse" .. ext
-
-            -- to simplify storing later on, all frames will be flattened in the timelapse.
-
-            self.lapse_sprite:flatten()
-
-            self.lapse_sprite.properties(PLUGIN_KEY).mode = "IS_LAPSE"
-
-            self.source_sprite.properties(PLUGIN_KEY).mode = "HAS_LAPSE"
-            self.source_sprite.properties(PLUGIN_KEY).lapse_file = self.lapse_sprite.filename
-
-            self.lapse_sprite:saveAs(self.lapse_sprite.filename)
-            self.source_sprite:saveAs(self.source_sprite.filename)
-
-            app.sprite = self.source_sprite
+            return sprite
         end,
 
 
-        __loadLapse = function(self)
-            -- print("LOADING ALREADY EXISTING LAPSE")
+        __timelapseFile = function(self)
+            local name, ext = self.source_sprite.filename:match("^(.*)(%..*)$")
 
-            -- the file name of the timelapse sprite should have been stored earlier in the lapse_file property in the source sprite.
+            return name .. "-lapse" .. ext
+        end,
 
-            local file_name = self.source_sprite.properties(PLUGIN_KEY).lapse_file
+        __loadLapse = function(self, file_name)
+            
+            -- open the sprite which has all of the frames
 
-            -- first check if the timelapse sprite is already open
+            local timelapse_sprite = Sprite{ fromFile = self:__timelapseFile() }
 
-            for i, sprite in ipairs(app.sprites) do
-                if sprite.filename == file_name then
-                    self.lapse_sprite = sprite
-                    return
-                end
+            -- load all of the frames into memory
+
+            for _, cel in ipairs(timelapse_sprite.cels) do
+                -- we create a new image instance here, as the cel.image will reference an invalid Image when we close the timelapse_sprite
+                table.insert(self.__frames, Image(cel.image))
             end
 
-            -- else open the file from disk
+            -- close the sprite now
 
-            local tmp_spite = app.sprite
-
-            self.lapse_sprite = Sprite{ fromFile = self.source_sprite.properties(PLUGIN_KEY).lapse_file }
-
-            -- whenever a sprite is created, it is also focused, so immediatly swap the focus back to the previous sprite.
-
-            app.sprite = tmp_spite
+            timelapse_sprite:close()
         end,
     }
 

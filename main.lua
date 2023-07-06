@@ -1,6 +1,8 @@
-require 'DevDialog'
 require 'FocusManager'
-require 'AselapseDialog'
+require 'SpriteLapse'
+
+sitechange_key = nil
+focus_manager = nil
 
 function init(plugin)
     focus_manager = FocusManager()
@@ -17,7 +19,11 @@ function init(plugin)
         group="sprite_crop",
         onclick = function()
 
-            focus_manager:add(SpriteLapse(app.sprite), app.sprite)
+            if not focus_manager:contains(app.sprite) then
+                focus_manager:add(function() return SpriteLapse(app.sprite) end, app.sprite)
+            end
+
+            focus_manager:get(app.sprite):openDialog()
             
         end,
         onenabled = function()
@@ -25,7 +31,7 @@ function init(plugin)
                 return false
             end
 
-            return app.sprite.properties(PLUGIN_KEY).mode ~= "IS_LAPSE"
+            return not app.sprite.properties(PLUGIN_KEY).has_dialog
         end,
     }
 
@@ -37,6 +43,52 @@ function init(plugin)
             app.sprite:close()
         end,
     }
+
+    sitechange_key = app.events:on('sitechange', function()
+
+        if app.sprite and not focus_manager:contains(app.sprite) and app.sprite.properties(PLUGIN_KEY).has_lapse then
+            focus_manager:add(function() return SpriteLapse(app.sprite) end, app.sprite, true)
+        end
+
+
+        verifySprite(app.sprite, { "has_lapse", "has_dialog", "is_paused" })
+
+    end)
+    
+    for _, sprite in ipairs(app.sprites) do
+        
+        verifySprite(sprite, { "has_lapse", "has_dialog", "is_paused" })
+
+        if not focus_manager:contains(sprite) and sprite.properties(PLUGIN_KEY).has_lapse then
+            focus_manager:add(function() return SpriteLapse(sprite) end, sprite)
+        end
+
+
+    end
+
+end
+
+function verifySprite(sprite, properties)
+    
+    if not sprite then
+        return
+    end 
+
+    local missing_property = false
+
+    for _, property in ipairs(properties) do
+        if sprite.properties(PLUGIN_KEY)[property] == nil then
+            missing_property = true
+            break
+        end
+    end
+
+    if missing_property then
+        for _, property in ipairs(properties) do
+            sprite.properties(PLUGIN_KEY)[property] = nil
+        end
+    end
+
 end
 
 function exit(plugin)
@@ -56,8 +108,6 @@ function exit(plugin)
 
     app.sprite = tmp_sprite
 
+    app.events:off(sitechange_key)
+
 end
-
--- local dev_dialog = DevDialog()
-
--- dev_dialog:show{ wait = false }
