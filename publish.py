@@ -55,18 +55,20 @@ with open("package.json", 'r+') as package_data:
 
 target_files = [ "package.json" ] + [ lua_script for lua_script in os.listdir('./') if lua_script.endswith('.lua') ]
 
-extension_location = "../publish/aselapse.aseprite-extension"
+publish_location = "../publish/"
+extension_name = "aselapse.aseprite-extension"
 
-if os.path.isfile(extension_location):
-    os.remove(extension_location)
+if os.path.isfile(publish_location + extension_name):
+    os.remove(publish_location + extension_name)
 
-os.mkdir("../publish")
+if not os.path.exists(publish_location):
+    os.mkdir(publish_location)
 
 print()
-with ZipFile(extension_location, 'w', ZIP_DEFLATED) as extension_zip:
+with ZipFile(publish_location + extension_name, 'w', ZIP_DEFLATED) as extension_zip:
     for file in target_files:
         print(f"Adding {file} to extension")
         extension_zip.write(file, compresslevel=5)
 
 print()
-print(f"Published extension at '{extension_location}'!")
+print(f"Published extension at '{publish_location + extension_name}'!")
