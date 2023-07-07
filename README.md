@@ -40,13 +40,13 @@ The timelapse stored in the extension should now match up with the modified vers
 
 ## Installation
 
-Download the aselapse.aseprite-extension file, under Releases.
+Download the 'aselapse.aseprite-extension' file, under [Releases](https://github.com/karstensensensen/aselapse/releases/latest).
 
 Double-click and say yes to install.
 
-Whenever the extension is run for the first time, some popup windows will appear asking for some permissions. These permissions are needed to store the timelapse and some json files on disk, needed by the extension.
+Whenever the extension is run for the first time, some popup windows will appear asking for some permissions. These permissions are needed by the extension, to store the timelapse and some json files on disk.
 
-To disable these popups check the 'Dont't show this specific alert again for this script' (this will need to be done multiple times for every sprite). And press 'Allow Write Access'.
+To disable these popups check the 'Dont't show this specific alert again for this script' (this will need to be done multiple times for every sprite). And press 'Allow Write Access' (or similar).
 
 <img src=resources/DontShowAlert.png alt="Icon" height="160"/>
 To avoid doing this multiple times, check the 'Give full trust to this script', and press 'Give Script Full Access'. This only needs to be done once, to prevent all alert popup windows.
