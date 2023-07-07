@@ -1,8 +1,8 @@
 {
-    "name": "aselapse",
+    "name": "aselapse-2",
     "displayName": "Aselapse",
     "description": "Creates timelapses of the pixel-art drawing process",
-    "version": "0.3.0.0",
+    "version": "0.3.0.1",
     "autor": {
         "name": "Zarstensen",
         "email": "4lo9d87b5@mozmail.com",
