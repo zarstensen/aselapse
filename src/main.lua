@@ -28,7 +28,9 @@ function verifySprite(sprite, properties)
 
     if missing_property then
         for _, property in ipairs(properties) do
-            sprite.properties(PLUGIN_KEY)[property] = nil
+            if sprite.properties(PLUGIN_KEY)[property] ~= nil then
+                sprite.properties(PLUGIN_KEY)[property] = nil
+            end
         end
     end
 
@@ -66,7 +68,7 @@ function init(plugin)
                 return false
             end
 
-            return not app.sprite.properties(PLUGIN_KEY).has_dialog
+            return not SpriteJson.getProperty(app.sprite, 'has_dialog')
         end,
     }
 
@@ -76,7 +78,7 @@ function init(plugin)
 
         verifySprite(app.sprite, { "has_lapse", "has_dialog", "is_paused" })
 
-        if app.sprite and not focus_manager:contains(app.sprite) and app.sprite.properties(PLUGIN_KEY).has_lapse then
+        if app.sprite and not focus_manager:contains(app.sprite) and SpriteJson.getProperty(app.sprite, 'has_lapse') then
             focus_manager:add(function() return SpriteLapse(app.sprite) end, app.sprite, true)
         end
 
@@ -89,10 +91,9 @@ function init(plugin)
         
         verifySprite(sprite, { "has_lapse", "has_dialog", "is_paused" })
 
-        if not focus_manager:contains(sprite) and sprite.properties(PLUGIN_KEY).has_lapse then
+        if not focus_manager:contains(sprite) and SpriteJson.getProperty(sprite, 'has_lapse') then
             focus_manager:add(function() return SpriteLapse(sprite) end, sprite)
         end
-
 
     end
 
@@ -107,7 +108,7 @@ function exit(plugin)
 
     -- loop over all sprites whilst saving and closing any timelapse files
     for _, sprite in ipairs(app.sprites) do
-        if sprite.properties(PLUGIN_KEY).mode == "IS_LAPSE" then
+        if SpriteJson.getProperty(sprite, 'mode') == "IS_LAPSE" then
             sprite:saveAs(sprite.filename)
             sprite:close()
         end

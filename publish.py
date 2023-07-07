@@ -53,7 +53,7 @@ with open("package.json", 'r+') as package_data:
 
 # add all package files to a .asesprite-extension zip file
 
-target_files = [ "package.json" ] + [ lua_script for lua_script in os.listdir('./') if lua_script.endswith('.lua') ]
+target_files = [ "package.json", "../modules/json.lua/json.lua" ] + [ lua_script for lua_script in os.listdir('./') if lua_script.endswith('.lua') ]
 
 publish_location = "../publish/"
 extension_name = "aselapse.aseprite-extension"
@@ -68,7 +68,8 @@ print()
 with ZipFile(publish_location + extension_name, 'w', ZIP_DEFLATED) as extension_zip:
     for file in target_files:
         print(f"Adding {file} to extension")
-        extension_zip.write(file, compresslevel=5)
+        
+        extension_zip.write(file, os.path.basename(file), compresslevel=5)
 
 print()
 print(f"Published extension at '{publish_location + extension_name}'!")

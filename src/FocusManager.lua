@@ -1,4 +1,5 @@
 require 'config'
+require 'SpriteJson'
 
 --- Class responsible for sending focus and unfocus events to managed classes, whenever the focused sprite changes.
 --- The manager instance will invoke a focused method, where a boolean will be passed, representing whether the sprite has been focused or not. 
@@ -42,7 +43,7 @@ function FocusManager()
             end
 
             for _, sprite in ipairs(app.sprites) do
-                sprite.properties(PLUGIN_KEY).object_id = nil
+                SpriteJson.setProperty(sprite, 'object_id', nil)
             end
         
         end,
@@ -72,7 +73,7 @@ function FocusManager()
 
             local uuid = tostring(Uuid())
 
-            sprite.properties(PLUGIN_KEY).object_id = uuid
+            SpriteJson.setProperty(sprite, 'object_id', uuid)
             -- store a placeholder empty table at the id index, so contains will return true, if it is called during obj_factory.
             self.__objects[uuid] = {}
             self.__objects[uuid] = obj_factory()
@@ -90,10 +91,10 @@ function FocusManager()
             -- Therefore focus is manually invoked here.
 
             if focus then
-                self.__objects[sprite.properties(PLUGIN_KEY).object_id]:focus(true)
+                self.__objects[SpriteJson.getProperty(sprite, 'object_id')]:focus(true)
             end
 
-            return self.__objects[sprite.properties(PLUGIN_KEY).object_id]
+            return self.__objects[SpriteJson.getProperty(sprite, 'object_id')]
         end,
 
 
@@ -106,10 +107,10 @@ function FocusManager()
             -- however, it is still possible that the user has closed a sprite, which object_id was set.
             -- therefore it is also checked whether there actually exists an object associated with the sprites object_id, if it is not nil.
 
-            if sprite.properties(PLUGIN_KEY).object_id == nil then
+            if SpriteJson.getProperty(sprite, 'object_id') == nil then
                 return false
             else
-                return self.__objects[sprite.properties(PLUGIN_KEY).object_id] ~= nil
+                return self.__objects[SpriteJson.getProperty(sprite, 'object_id')] ~= nil
             end
         end,
 
@@ -118,14 +119,14 @@ function FocusManager()
         ---@return Table | nil
         --- nil if the sprite is not managed by the current instance.
         get = function(self, sprite)
-            return self.__objects[sprite.properties(PLUGIN_KEY).object_id]
+            return self.__objects[SpriteJson.getProperty(sprite, 'object_id')]
         end,
 
         --- Removes the object associated with the passed sprite.
         ---@param sprite Sprite
         remove = function(self, sprite)
-            self.__objects[sprite.properties(PLUGIN_KEY).object_id] = nil
-            sprite.properties(PLUGIN_KEY).object_id = nil
+            self.__objects[SpriteJson.getProperty(sprite, 'object_id')] = nil
+            SpriteJson.setProperty(sprite, 'object_id', nil)
 
             self.__active_object = nil
         end,

@@ -24,16 +24,16 @@ require 'config'
                 -- each sprite which has a timelapse, will be marked with the has_lapse property.
                 -- this signals to the extension that on future loads, the following sprite should automatically be registered in the extension.
                 
-                self.source_sprite.properties(PLUGIN_KEY).has_lapse = true
+                SpriteJson.setProperty(self.source_sprite, 'has_lapse', true)
                 
                 -- has_dialog represents whether the current sprite should have its lapse_dialog visible to the user
-                if self.source_sprite.properties(PLUGIN_KEY).has_dialog == nil then
-                    self.source_sprite.properties(PLUGIN_KEY).has_dialog = false
+                if SpriteJson.getProperty(self.source_sprite, 'has_dialog') == nil then
+                    SpriteJson.setProperty(self.source_sprite, 'has_dialog', false)
                 end
                 
                 -- is_paused controls whether frames are stored, on sprite modifications
-                if self.source_sprite.properties(PLUGIN_KEY).is_paused == nil then
-                    self.source_sprite.properties(PLUGIN_KEY).is_paused = true
+                if SpriteJson.getProperty(self.source_sprite, 'is_paused') == nil then
+                    SpriteJson.setProperty(self.source_sprite, 'is_paused', true)
                 end
                 
             end)
@@ -50,7 +50,7 @@ require 'config'
                 title = "Timelapse",
                 onclose = function()
                     if self.__user_closed then
-                        self:__setProperty("has_dialog", false)
+                        SpriteJson.setProperty(self.source_sprite, 'has_dialog', false)
                     end
                 end
             }
@@ -82,7 +82,7 @@ require 'config'
             
             self.__sprite_event_key = self.source_sprite.events:on('change',
             function(ev)
-                if self.source_sprite.properties(PLUGIN_KEY).is_paused then
+                if SpriteJson.getProperty(self.source_sprite, 'is_paused') then
                     return
                 end
                 
@@ -95,6 +95,7 @@ require 'config'
         --- Should be invoked whenever the SpriteLapse is no longer needed.
         --- Saves a copy of the current timelapse to disk.
         cleanup = function(self)
+            SpriteJson.setProperty(self.source_sprite, 'object_id', nil)
             self:__generateTimelapse():close()
         end,
         
@@ -103,7 +104,7 @@ require 'config'
             
             -- the dialog should only be visible to the user, if the source_sprite is focused, and has_dialog is set.
             
-            if focused and self.source_sprite.properties(PLUGIN_KEY).has_dialog then
+            if focused and SpriteJson.getProperty(self.source_sprite, 'has_dialog') then
                 self.lapse_dialog:show{ wait = false }
             else
                 -- __user_closed is used in the onclose method, to decide whether has_dialog should be cleared or not.
@@ -115,7 +116,7 @@ require 'config'
         
         --- Shows the lapse_dialog dialog.
         openDialog = function(self)
-            self:__setProperty("has_dialog", true)
+            SpriteJson.setProperty(self.source_sprite, 'has_dialog', true)
 
             self.lapse_dialog:show{ wait = false }
         end,
@@ -125,30 +126,18 @@ require 'config'
         -- list of Image objects, representing a frame in the timelapse.
         __frames = {},
 
-        --- Sets the given property to the passed value, in the source_sprite
-        ---@param property_name string
-        ---@param property_value any
-        __setProperty = function(self, property_name, property_value)
-            self.source_sprite.properties(PLUGIN_KEY)[property_name] = property_value
-
-            -- we do not want to store proeprties change events, as those are not visual,
-            -- so we immediatly erase the newly stored frame, after modifying the sprite properties
-
-            if not self.source_sprite.properties(PLUGIN_KEY).is_paused then
-                self:__removeFrame()
-            end
-
-        end,
-
         --- Toggle the pause state of the SpriteLapse instance
         __togglePause = function(self)
-            self:__setProperty("is_paused", not self.source_sprite.properties(PLUGIN_KEY).is_paused)
+            SpriteJson.modifyProperty(self.source_sprite, 'is_paused',
+            function(pause_state)
+                return not pause_state
+            end)
         end,
 
         --- Update the text of the playPauseButton so it matches with the pause state.
         ---@param self any
         __syncPlayPauseButton = function(self)
-            if self.source_sprite.properties(PLUGIN_KEY).is_paused then
+            if SpriteJson.getProperty(self.source_sprite, 'is_paused') then
                 self.lapse_dialog:modify{
                     id="playPauseButton",
                     text = "►"
