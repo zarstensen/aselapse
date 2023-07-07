@@ -1,3 +1,9 @@
+-- make sure the current api version is supported
+if app.apiVersion < 23 then
+    app.alert("Aselapse requires version 1.3-rc3 or greater to function (api version 23 or greater). To disable this popup, disable the extension.")
+    return
+end
+
 require 'FocusManager'
 require 'SpriteLapse'
 
@@ -37,7 +43,6 @@ function verifySprite(sprite, properties)
 end
 
 function init(plugin)
-
     -- initialize a focus manager instance
 
     focus_manager = FocusManager()
