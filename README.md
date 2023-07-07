@@ -40,7 +40,7 @@ The timelapse stored in the extension should now match up with the modified vers
 
 ## Installation
 
-Download the aselapse.aseprite-extension file, under Releases.
+Download the 'aselapse.aseprite-extension' file, under [Releases](https://github.com/karstensensensen/aselapse/releases/latest).
 
 Double-click and say yes to install.
 
