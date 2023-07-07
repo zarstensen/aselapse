@@ -10,6 +10,10 @@ SpriteJson = {
     ---@param property_value any
     setProperty = function(sprite, property_name, property_value)
 
+        if not SpriteJson.__isSaved(sprite) then
+            return
+        end
+
         local properties = {}
         
         if app.fs.isFile(SpriteJson.__jsonName(sprite)) then
@@ -33,6 +37,10 @@ SpriteJson = {
     ---@return any | nil
     getProperty = function(sprite, property_name)
 
+        if not SpriteJson.__isSaved(sprite) then
+            return nil
+        end
+
         if not app.fs.isFile(SpriteJson.__jsonName(sprite)) then
             return nil
         end
@@ -50,8 +58,18 @@ SpriteJson = {
     modifyProperty = function(sprite, property_name, mod_func)
         SpriteJson.setProperty(sprite, property_name, mod_func(SpriteJson.getProperty(sprite, property_name)))
     end,
+
+    __isSaved = function(sprite)
+        return sprite.filename:match("^.*%..*$") ~= nil
+    end,
+
     -- retrieves the json file that will be associated with the passed sprite.
     __jsonName = function(sprite)
+
+        if not SpriteJson.__isSaved(sprite) then
+            return nil
+        end
+
         local name = sprite.filename:match("^(.*)%..*$")
 
         return name .. "-lapse.json"

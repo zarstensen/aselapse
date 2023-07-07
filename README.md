@@ -12,7 +12,7 @@ Below is the timelapse generated, for the creation of the extension icon:
 
 ## Usage
 
-To enable timelapse recording for a sprite, locate the 'Edit Timelapse' command, under the Sprite menu.
+To enable timelapse recording for a sprite, locate the 'Edit Timelapse' command, under the Sprite menu. The sprite must be saved to disk before this is done!
 
 <img src=resources/MenuLocation.png alt="Icon" width="160" height="160"/>
 
@@ -21,6 +21,9 @@ When pressed the following dialog window will appear.
 <img src=resources/Dialog.png alt="Icon" height="160"/>
 
 This window displays the current number of frames recorded for the timelapse, and lets one  pause and restart recording, as well as generate a sprite, that contains the timelapse.
+
+
+<img src=resources/UsageExample.gif alt="Icon" height="400"/>
 
 The extension automatically begins recording sprites on project load, that previously have enabled the timelapse function.
 ### Modifying timelapses
