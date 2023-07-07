@@ -10,6 +10,8 @@ Below is the timelapse generated, for the creation of the extension icon:
 
 <img src=resources/AselapseIcon-lapse.gif alt="Icon" width="160" height="160"/>
 
+This extension requires Aseprite version 1.3-rc3 or greater to function.
+
 ## Usage
 
 To enable timelapse recording for a sprite, locate the 'Edit Timelapse' command, under the Sprite menu. The sprite must be saved to disk before this is done!
@@ -37,6 +39,15 @@ Perform any modifications to the timelapse, and reopen the target sprite.
 
 The timelapse stored in the extension should now match up with the modified version on disk.
 
+## [IMPORTANT] Moving / Renaming Sprites
+
+If your sprite (lets say 'Sprite.aseprite') has a timelapse, and you want to move it to a different folder, you also need to move the 'Sprite-lapse.json' as well as the 'Sprite-lapse.aseprite' files along with it, to preserve the timelapse data.
+
+Simmilarly, when renaming a sprite file, (e.g. 'Sprite_A.aseprite' to 'Sprite_B.aseprite'), you need to rename the following files as well:
+
+'Sprite_A-lapse.json' -> 'Sprite_B-lapse.json'
+
+'Sprite_A-lapse.aseprite' -> 'Sprite_B-lapse.aseprite'
 
 ## Installation
 
