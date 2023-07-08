@@ -12,6 +12,12 @@ Below is the time lapse generated, for the creation of the extension icon:
 
 This extension requires Aseprite version 1.3-rc3 or greater to function.
 
+To download the latest beta trough steam, please perform the following steps:
+- go to 'Library'
+- Right click Aseprite,
+- Click 'Properties'
+- Go to the 'Betas' menu
+- Select 'beta - v1.3 ...' under beta participation.
 ## Usage
 
 To enable time lapse recording for a sprite, locate the 'Edit time lapse' command, under the Sprite menu. The sprite must be saved to disk before this is done!
