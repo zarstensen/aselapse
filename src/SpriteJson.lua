@@ -60,7 +60,7 @@ SpriteJson = {
     end,
 
     __isSaved = function(sprite)
-        return sprite.filename:match("^.*%..*$") ~= nil
+        return app.fs.isFile(sprite.filename)
     end,
 
     -- retrieves the json file that will be associated with the passed sprite.

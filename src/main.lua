@@ -12,6 +12,8 @@ sitechange_key = nil
 -- FocusManager instance, for managing all SpriteLapse instances.
 focus_manager = nil
 
+--- NOT USED FOR THE MOMENT, JSON FILES ARE USED INSTEAD
+---
 --- Checks if the passed sprite contains all of the passed properties.
 --- If one of the properties are missing, all other properties are set to nil.
 --- This makes sure any potentially corrupt sprite, will be reset by the extension, before it is loaded.
@@ -57,9 +59,14 @@ function init(plugin)
     
     plugin:newCommand{
         id="edit_command",
-        title="Edit Timelapse",
+        title="Edit Time lapse",
         group="sprite_crop",
         onclick = function()
+
+            if not app.fs.isFile(app.sprite.filename) then
+                app.alert("Sprite must be saved to disk before a time lapse can be created!")
+                return
+            end
 
             if not focus_manager:contains(app.sprite) then
                 focus_manager:add(function() return SpriteLapse(app.sprite) end, app.sprite)
