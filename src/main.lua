@@ -59,7 +59,7 @@ function init(plugin)
     
     plugin:newCommand{
         id="edit_command",
-        title="Edit Time lapse",
+        title="Edit Time Lapse",
         group="sprite_crop",
         onclick = function()
 
@@ -88,20 +88,16 @@ function init(plugin)
 
     sitechange_key = app.events:on('sitechange', function()
 
-        verifySprite(app.sprite, { "has_lapse", "has_dialog", "is_paused" })
-
         if app.sprite and not focus_manager:contains(app.sprite) and SpriteJson.getProperty(app.sprite, 'has_lapse') then
             focus_manager:add(function() return SpriteLapse(app.sprite) end, app.sprite, true)
         end
 
     end)
     
-    -- on load, go through every sprite, and check if they have a timelapse registered, if so, add it to the focus manager instance,
-    -- so the user does not have to manually click the "timelapse" command every time the sprite is opened.
+    -- on load, go through every sprite, and check if they have a time lapse registered, if so, add it to the focus manager instance,
+    -- so the user does not have to manually click the "time lapse" command every time the sprite is opened.
 
     for _, sprite in ipairs(app.sprites) do
-        
-        verifySprite(sprite, { "has_lapse", "has_dialog", "is_paused" })
 
         if not focus_manager:contains(sprite) and SpriteJson.getProperty(sprite, 'has_lapse') then
             focus_manager:add(function() return SpriteLapse(sprite) end, sprite)
@@ -113,18 +109,11 @@ end
 
 function exit(plugin)
     
-    -- cleanup focus manager, unsubscribe from sitechange event, and also generate and save a timelapse for all currently open sprites, that have a timelapse.
+    -- cleanup focus manager, unsubscribe from sitechange event, and also generate and save a time lapse for all currently open sprites, that have a timelapse.
 
     focus_manager:cleanup()
-    focus_manager = nil
 
-    -- loop over all sprites whilst saving and closing any timelapse files
-    for _, sprite in ipairs(app.sprites) do
-        if SpriteJson.getProperty(sprite, 'mode') == "IS_LAPSE" then
-            sprite:saveAs(sprite.filename)
-            sprite:close()
-        end
-    end
+    focus_manager = nil
 
     app.events:off(sitechange_key)
 

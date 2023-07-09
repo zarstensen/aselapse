@@ -1,10 +1,10 @@
 require 'config'
 
- --- Constructs an SpriteLapse object, responsible for managing (adding and removing frames) the timelapse of the passed source sprite.
- --- fails if the source sprite is another timelapse sprite managed by another SpriteLapse instance.
+ --- Constructs an SpriteLapse object, responsible for managing (adding and removing frames) the time lapse of the passed source sprite.
+ --- fails if the source sprite is another time lapse sprite managed by another SpriteLapse instance.
  --- Also responsible for managing a dialog object that allows the user to edit this very sprite lapse instance.
  ---@param source_sprite Sprite
- --- the sprite that frames should be taken from, when updating the timelapse
+ --- the sprite that frames should be taken from, when updating the time lapse
  ---@return SpriteLapse | nil
  --- returns an SpriteLapse instance, if the object was created succesfully, otherwise nil is returned.
  function SpriteLapse(source_sprite)
@@ -21,7 +21,7 @@ require 'config'
             
             app.transaction(function()
                 
-                -- each sprite which has a timelapse, will be marked with the has_lapse property.
+                -- each sprite which has a time lapse, will be marked with the has_lapse property.
                 -- this signals to the extension that on future loads, the following sprite should automatically be registered in the extension.
                 
                 SpriteJson.setProperty(self.source_sprite, 'has_lapse', true)
@@ -38,7 +38,7 @@ require 'config'
                 
             end)
             
-            -- load any previously stored timelapse frames into memory
+            -- load any previously stored time lapse frames into memory
             
             if app.fs.isFile(self:__timelapseFile()) then
                 self:__loadLapse(self:__timelapseFile())
@@ -47,7 +47,7 @@ require 'config'
             -- setup dialog
             
             self.lapse_dialog = Dialog {
-                title = "Timelapse",
+                title = "Time Lapse",
                 onclose = function()
                     if self.__user_closed then
                         SpriteJson.setProperty(self.source_sprite, 'has_dialog', false)
@@ -78,7 +78,7 @@ require 'config'
             
             self:__syncPlayPauseButton()
             
-            -- store a copy of the sprite in memory, every time the sprite is modified, unless the timelapse is paused
+            -- store a copy of the sprite in memory, every time the sprite is modified, unless the time lapse is paused
             
             self.__sprite_event_key = self.source_sprite.events:on('change',
             function(ev)
@@ -93,7 +93,7 @@ require 'config'
         end,
 
         --- Should be invoked whenever the SpriteLapse is no longer needed.
-        --- Saves a copy of the current timelapse to disk.
+        --- Saves a copy of the current time lapse to disk.
         cleanup = function(self)
             SpriteJson.setProperty(self.source_sprite, 'object_id', nil)
             self:__generateTimelapse():close()
@@ -123,7 +123,7 @@ require 'config'
         
         __user_closed = true,
         __sprite_event_key = nil,
-        -- list of Image objects, representing a frame in the timelapse.
+        -- list of Image objects, representing a frame in the time lapse.
         __frames = {},
 
         --- Toggle the pause state of the SpriteLapse instance
@@ -167,7 +167,7 @@ require 'config'
             }
         end,
 
-        --- Removes the latest frame from the timelapse memory.
+        --- Removes the latest frame from the time lapse memory.
         __removeFrame = function(self)
             table.remove(self.__frames, #self.__frames)
                 self.lapse_dialog:modify{
@@ -176,7 +176,7 @@ require 'config'
                 }
         end,
 
-        --- Creates a new sprite which holds the timelapse frame currently stored in memory
+        --- Creates a new sprite which holds the time lapse frame currently stored in memory
         ---@return Sprite
         --- The generated sprite
         __generateTimelapse = function(self)
@@ -210,7 +210,7 @@ require 'config'
 
             sprite:deleteFrame(#sprite.frames)
 
-            -- finally save the timelapse sprite to disk
+            -- finally save the time lapse sprite to disk
 
             sprite.filename = self:__timelapseFile()
             
@@ -221,7 +221,7 @@ require 'config'
 
         --- Returns the name of the source_sprite suffixed with '-lapse'
         ---@return string
-        --- Timelapse filename
+        --- Time lapse filename
         __timelapseFile = function(self)
             local name, ext = self.source_sprite.filename:match("^(.*)(%..*)$")
 

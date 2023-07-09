@@ -34,18 +34,14 @@ function FocusManager()
             -- call cleanup on any managed objects that define a cleanup method,
             -- also make sure to call focus(false), in order to make all managed objects hide any potential ui elements.
 
-            for _, dialog in pairs(self.__objects) do
-                dialog:focus(false)
+            for _, obj in pairs(self.__objects) do
+                obj:focus(false)
         
-                if dialog.cleanup then
-                    dialog:cleanup()
+                if obj.cleanup then
+                    obj:cleanup()
                 end
             end
-
-            for _, sprite in ipairs(app.sprites) do
-                SpriteJson.setProperty(sprite, 'object_id', nil)
-            end
-        
+            
         end,
         
         --- Associates the result of the passed object factory, with the passed sprite.

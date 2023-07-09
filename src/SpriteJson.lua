@@ -77,7 +77,8 @@ SpriteJson = {
 
     -- load the json file associated with the passed file from disk.
     -- if this fails, an empty table is returned.
-    __loadJson = function(sprite) 
+    __loadJson = function(sprite)
+
         local json_file = io.open(SpriteJson.__jsonName(sprite), 'r')
         local json_data = json_file:read("*all")
         json_file:close()
