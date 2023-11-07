@@ -65,13 +65,13 @@ Double-click and say yes to install.
 
 ### Linux/Debian-Based
 
--Open Aseprite
--Go to Upper Menu "Edit" -> "Preferences"
--Select "Extensions" on left side menu
--Click on "Add Extension" button
--Navigate to your Downloads folder (or where you put "aselapse.aseprite-extension" file which you downloaded earlier)
--Select "aselapse.aseprite-extension" file and click on "OK" button in "Add Extension" window and then click on "OK" in "Extensions" window
--After that, you should be able Open Aselapse in "Sprite -> Edit Time Lapse".
+- Open Aseprite
+- Go to Upper Menu "Edit" -> "Preferences"
+- Select "Extensions" on left side menu
+- Click on "Add Extension" button
+- Navigate to your Downloads folder (or where you put "aselapse.aseprite-extension" file which you downloaded earlier)
+- Select "aselapse.aseprite-extension" file and click on "OK" button in "Add Extension" window and then click on "OK" in "Extensions" window
+- After that, you should be able Open Aselapse in "Sprite -> Edit Time Lapse".
 
 <img src=resources/AselapseExtensionInstallation.gif alt="Installation Tutorial" width="570" height="432"/>
 
