@@ -59,7 +59,22 @@ Simmilarly, when renaming a sprite file, (e.g. 'Sprite_A.aseprite' to 'Sprite_B.
 
 Download the 'aselapse.aseprite-extension' file, under [Releases](https://github.com/karstensensensen/aselapse/releases/latest).
 
+### Windows
+
 Double-click and say yes to install.
+
+### Linux/Debian-Based
+
+- Open Aseprite
+- Go to Upper Menu "Edit" -> "Preferences"
+- Select "Extensions" on left side menu
+- Click on "Add Extension" button
+- Navigate to your Downloads folder (or where you put "aselapse.aseprite-extension" file which you downloaded earlier)
+- Select "aselapse.aseprite-extension" file and click on "OK" button in "Add Extension" window and then click on "OK" in "Extensions" window
+- After that, you should be able Open Aselapse in "Sprite -> Edit Time Lapse".
+
+<img src=resources/AselapseExtensionInstallation.gif alt="Installation Tutorial" width="570" height="432"/>
+
 
 Whenever the extension is run for the first time, some popup windows will appear asking for some permissions. These permissions are needed by the extension, to store the time lapse and some json files on disk.
 
